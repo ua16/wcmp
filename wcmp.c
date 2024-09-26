@@ -494,17 +494,6 @@ int main() {
         }
 
             
-        // Pausing 
-        if (key == ' ') {
-            if (pause == false) {
-                PauseMusicStream(music);
-            }
-            else {
-                ResumeMusicStream(music);
-            }
-            pause = !pause;
-        }
-
         // scrolling 
 
         prevScrollOffset = scrollOffset;
@@ -675,6 +664,26 @@ int main() {
                 PlayMusicStream(music);
                 clear();
             }
+        }
+
+        // Pausing 
+        if (key == ' ') {
+            if (pause == false) {
+                PauseMusicStream(music);
+            }
+            else {
+                ResumeMusicStream(music);
+            }
+            pause = !pause;
+        }
+
+        // Seeking back and forth 
+        
+        if (key == 'l' & (timePlayed + 5.0) < currentSongLength) {
+            SeekMusicStream(music, timePlayed + 5.0);
+        }
+        if (key == 'h' & (timePlayed - 5.0) > 0) {
+            SeekMusicStream(music, timePlayed - 5.0);
         }
 
         // Update variables

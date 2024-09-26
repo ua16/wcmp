@@ -17,10 +17,12 @@ A console music player for windows inspired by (cmus)[https://github.com/cmus/cm
 - `j` - Move down
 - `k` - Move up
 
-### song eontrols 
+### song controls 
 - `<Space>` - Pause/unpause current song
 - `n` - Play next song 
 - `<Enter>` - Play song under cursor
+- `l` - Seek forward 5 seconds
+- `h` - Seek backward 5 seconds
 
 ### play queue editing
 - `a` - Append song or playlist to play queue
