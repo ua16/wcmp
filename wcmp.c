@@ -1,12 +1,18 @@
+#include <ctype.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stddef.h>
 #include <stdio.h>
 
+#include <windef.h>
 #include <windows.h>
 
 #include "include/raudio.h"
 #include "curses.h"
+
+// DEFINITIONS
+#define MAX_SONG_FILES 400
+#define MAX_PLAYLIST_FILES 100 // Not in use. Playlist length is MAX_SONG_FILES
 
 
 
@@ -134,12 +140,13 @@ void getListOfFiles(const char *path, char (*fileList)[MAX_PATH], char (*playlis
         if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
             getListOfFiles(subPath, fileList, playlistList, currentListIndex, currentPlayListIndex);
         } else {
-            if (checkIfValidFile(findFileData.cFileName, 1) == 0) {
+            if (checkIfValidFile(findFileData.cFileName, 1) == 0 & *currentListIndex < MAX_SONG_FILES) {
                 // Add this song to the list 
                 strcpy(fileList[*currentListIndex], subPath);
                 *currentListIndex = *currentListIndex + 1;
             }
-            if (checkIfValidFile(findFileData.cFileName, 2) == 0) {
+            // Playlist uses maxFiles var in too many places so this'll have to be the same for now. 
+            if (checkIfValidFile(findFileData.cFileName, 2) == 0 & *currentPlayListIndex < MAX_SONG_FILES) {
                 // Add this song to the list 
                 strcpy(playlistList[*currentPlayListIndex], subPath);
                 *currentPlayListIndex = *currentPlayListIndex + 1;
@@ -360,6 +367,45 @@ void loadPlayList(char (*array)[MAX_PATH], const char *fileName){
     fclose(playListFile);
 }
 
+void strLower(char *string, int length) {
+    // Warning: Modifies memory do not use on file list 
+    int i = 0; 
+    while (i < length & string[i] != '\0') {
+        string[i] = tolower(string[i]);
+        i ++;
+    }
+}
+
+void searchStringInList(char (*source)[MAX_PATH], int sourceSize,  char (*output)[MAX_PATH], int outputSize, const char *query, int offset) {
+    // Just checking for substrings. Make sure to clear output before passing it here 
+    int currentOutputIndex = 0;
+    int currentSourceIndex = 0;
+
+    char fileNameLower[MAX_PATH];
+    char queryLower[MAX_PATH];
+    strncpy(queryLower, query, MAX_PATH);
+    strLower(queryLower, MAX_PATH);
+
+    while (currentSourceIndex < sourceSize & source[currentSourceIndex][0] != '\0') {
+        // Offset is to remove the C://user/Music from the search 
+
+        strncpy(fileNameLower, source[currentSourceIndex], MAX_PATH);
+        strLower(fileNameLower, MAX_PATH);
+
+        if (strstr(fileNameLower + offset, queryLower) != NULL){
+            strncpy(output[currentOutputIndex], source[currentSourceIndex], MAX_PATH);
+            currentOutputIndex++;
+        }
+
+        currentSourceIndex++;
+
+        // Break after filling search results 
+        if (currentOutputIndex > outputSize - 1) {
+            break;
+        }
+    }
+}
+
 
 // MAIN FUNCTION ---------------------------------------------------------------------------//
 
@@ -370,7 +416,7 @@ int main() {
 
 
     // Load Music Files And Playlists -----------  //
-    int maxFiles = 400;
+    int maxFiles = MAX_SONG_FILES;
     char fileList[maxFiles][MAX_PATH];
     char playlists[maxFiles][MAX_PATH]; // A list of playlists
     int currentFileListIndex = 0;
@@ -464,6 +510,14 @@ int main() {
     initializeTrackArray(playQueue, MAX_PATH);
     int playQueueLength = 0;
 
+
+    // Initialize search list -------------------  //
+
+    int maxSearchResults = 20;
+    char searchResults[maxSearchResults][MAX_PATH];
+    initializeTrackArray(searchResults, maxSearchResults);
+
+
     // MAIN LOOP STUFF ---------------------------------------------------------------------//
 
     // Initialize music so we can load into it
@@ -512,6 +566,10 @@ int main() {
                 listScroll++;
                 adjustScrollOffset(&scrollOffset, listScroll, screenY, 1);
             }
+            if ((currentMenu == 5) & (searchResults[listScroll + 1][0] != '\0' & listScroll < maxSearchResults)){
+                listScroll++;
+                adjustScrollOffset(&scrollOffset, listScroll, screenY, 1);
+            }
         }
         if ((key == 'k') & (listScroll > 0)) {
             listScroll--;
@@ -537,6 +595,18 @@ int main() {
                 UnloadMusicStream(music);
                 music = LoadMusicStream(playQueue[listScroll]);
                 strcpy(currentSong, playQueue[listScroll]);
+                currentSongLength = GetMusicTimeLength(music);
+                formatTimeString(currentSongLength, strCurrentSongLength);
+
+                PlayMusicStream(music);
+                clear();
+            }
+
+            // Search Menu
+            if ((currentMenu == 5) & (searchResults[listScroll][0] != '\0')){
+                UnloadMusicStream(music);
+                music = LoadMusicStream(searchResults[listScroll]);
+                strcpy(currentSong, searchResults[listScroll]);
                 currentSongLength = GetMusicTimeLength(music);
                 formatTimeString(currentSongLength, strCurrentSongLength);
 
@@ -581,7 +651,8 @@ int main() {
             key = 'n';
         }
 
-        // Playlist Creation Screen Logic -------- //
+
+        // Text Entering Logic ------------------- //
 
         if (inputKey == 27) {
             textEnter = false;
@@ -590,12 +661,27 @@ int main() {
 
         if (isValidFileTextChar(inputKey)) {
             snprintf(textInputBuffer, sizeof(textInputBuffer) - 3, "%s%c", textInputBuffer, inputKey);
+
+            // If we're searching update search results 
+            if (currentMenu == 5) {
+                initializeTrackArray(searchResults, maxSearchResults);
+                searchStringInList(fileList, maxFiles, searchResults, maxSearchResults, textInputBuffer, dirPathOffset);
+                clear();
+            }
         }
 
         if (inputKey == 8){
             popLastChar(textInputBuffer);
+
+            if (currentMenu == 5) {
+                initializeTrackArray(searchResults, maxSearchResults);
+                searchStringInList(fileList, maxFiles, searchResults, maxSearchResults, textInputBuffer, dirPathOffset);
+            }
+
             clear();
         }
+
+        // Playlist Creation Screen Logic -------- //
 
         if (inputKey == '\n' & currentMenu == 4 & textInputBuffer[0] != '\0'){
             char playListPath[MAX_PATH];
@@ -609,6 +695,17 @@ int main() {
 
             // Add to list of playlists 
             appendToTrackList(playlists, playListPath);
+        }
+
+        // Search Screen Logic ------------------- //
+        //
+        if (inputKey == '\n' & currentMenu == 5 & textInputBuffer[0] != '\0'){
+            textEnter = false;
+            curs_set(0);
+        }
+
+        if (currentMenu == 5 & key == 'a'){
+            appendToTrackList(playQueue, searchResults[listScroll]);
         }
 
 
@@ -647,6 +744,15 @@ int main() {
             listScroll = 0;
             scrollOffset = 0;
             curs_set(1);
+        }
+
+        if (key == '/') {
+            currentMenu = 5;
+            textEnter = true;
+            memset(textInputBuffer, 0, sizeof(textInputBuffer)); 
+            clear();
+            listScroll = 0;
+            scrollOffset = 0;
         }
 
         // Screen indpenedent Logic -------------- //
@@ -786,6 +892,26 @@ int main() {
             mvprintw(2,0, "Save Playlist: ");
             mvprintw(2, 15, textInputBuffer);
         }
+
+        if (currentMenu == 5) { 
+            mvprintw(1, 0, "Search: ");
+            mvprintw(1, 8, textInputBuffer);
+
+            int row = 0;
+            while ((row < screenY - 3) & (searchResults[row + scrollOffset][0] != '\0')) {
+
+                if (rowHighlightCalc(row, scrollOffset) == listScroll) {
+                    attron(COLOR_PAIR(43));
+                    mvprintw(row + 2, 0, searchResults[row + scrollOffset] + dirPathOffset);
+                    attroff(COLOR_PAIR(43));
+                }
+                else {
+                    mvprintw(row + 2, 0, searchResults[row + scrollOffset] + dirPathOffset);
+                }
+                row++;
+            }
+        }
+
 
         refresh();
         Sleep(5);
