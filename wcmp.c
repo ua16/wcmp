@@ -82,7 +82,7 @@ void listDir(const char *path) {
     hFind = FindFirstFile(searchPath, &findFileData);
 
     if (hFind == INVALID_HANDLE_VALUE) {
-        printf("Some error %lu\n", GetLastError());
+        printf("Invalid File Handle %lu\n", GetLastError());
     }
 
     do {
@@ -122,7 +122,7 @@ void getListOfFiles(const char *path, char (*fileList)[MAX_PATH], char (*playlis
     hFind = FindFirstFile(searchPath, &findFileData);
 
     if (hFind == INVALID_HANDLE_VALUE) {
-        printf("Some error %lu\n", GetLastError());
+        printf("Invalid File Handle Value %lu\n", GetLastError());
     }
 
     do {
@@ -220,25 +220,7 @@ void formatTimeString(float time, char *string) {
     snprintf(string, 20, "%02d:%02d", (iTime/60), (iTime%60));
 }
 
-int shouldIncScrollOffset(int currentScroll, int maxY ) {
-    if (currentScroll < (maxY / 2) ) {
-        return 0;
-    }
-    else {
-        return 1;
-    }
-}
-
-int shouldDecScrollOffset(int offset){
-    if (offset > 0) {
-        return 1;
-    }
-    else {
-        return 0;
-    }
-}
-
-void adjustScrollOffset (int *offset, int currentScroll, int maxY, int add) {
+void adjustScrollOffsetOld (int *offset, int currentScroll, int maxY, int add) {
     // add is whether to increment or decrement (1 for +1, 0 for -1)
     // set to 0
     if (currentScroll < maxY/2) {
@@ -255,6 +237,18 @@ void adjustScrollOffset (int *offset, int currentScroll, int maxY, int add) {
         *offset = *offset - 1;
         return;
     }
+}
+
+void adjustScrollOffset (int *offset, int currentScroll, int maxY, int add) {
+    if (currentScroll < maxY/2) {
+        *offset = 0;
+        return;
+    }
+
+    else {
+        *offset = (currentScroll - maxY/2);
+    }
+
 }
 
 int rowHighlightCalc(int row, int offset) {
@@ -406,6 +400,14 @@ void searchStringInList(char (*source)[MAX_PATH], int sourceSize,  char (*output
     }
 }
 
+int getFirstEmptyInArray (char (*array)[MAX_PATH]){
+    int i = 0;
+    while (array[i][0] != '\0'){
+        i++;
+    }
+    return i;
+}
+
 
 // MAIN FUNCTION ---------------------------------------------------------------------------//
 
@@ -416,7 +418,7 @@ int main() {
 
 
     // Load Music Files And Playlists -----------  //
-    int maxFiles = MAX_SONG_FILES;
+    const int maxFiles = MAX_SONG_FILES;
     char fileList[maxFiles][MAX_PATH];
     char playlists[maxFiles][MAX_PATH]; // A list of playlists
     int currentFileListIndex = 0;
@@ -470,7 +472,7 @@ int main() {
     // Initialize UI Elements -------------------  //
 
     char windowTitle[100];
-    strcpy(windowTitle, "Windows Curses Music Player");
+    strcpy(windowTitle, "wcmp Curses Music Player");
 
     char currentSong[MAX_PATH];
     strcpy(currentSong, fileList[0]);
@@ -575,6 +577,32 @@ int main() {
             listScroll--;
             adjustScrollOffset(&scrollOffset, listScroll, screenY, 0);
         }
+
+        // Jumping : jump to beginning and end
+
+        if (key == 'g'){
+            listScroll = 0;
+            adjustScrollOffset(&scrollOffset, listScroll, screenY, 0);
+        }
+        if (key == 'G'){
+            if (currentMenu == 1) {
+                listScroll = getFirstEmptyInArray(fileList) - 1;
+                adjustScrollOffset(&scrollOffset, listScroll, screenY, 0);
+            }
+            if (currentMenu == 2) {
+                listScroll = getFirstEmptyInArray(playQueue) - 1;
+                adjustScrollOffset(&scrollOffset, listScroll, screenY, 0);
+            }
+            if (currentMenu == 3) {
+                listScroll = getFirstEmptyInArray(playlists) - 1;
+                adjustScrollOffset(&scrollOffset, listScroll, screenY, 0);
+            }
+            if (currentMenu == 5) {
+                listScroll = getFirstEmptyInArray(searchResults) - 1;
+                adjustScrollOffset(&scrollOffset, listScroll, screenY, 0);
+            }
+        }
+
 
 
         // Play on pressing enter 
