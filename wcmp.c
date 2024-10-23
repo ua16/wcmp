@@ -4,7 +4,6 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include <windef.h>
 #include <windows.h>
 
 #include "include/raudio.h"
