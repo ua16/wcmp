@@ -4,7 +4,6 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include <windef.h>
 #include <windows.h>
 
 #include "include/raudio.h"
@@ -18,7 +17,8 @@
 
 // FUNCTIONS FOR DEAILING WITH TRACK NAMES -------------------------------------------------//
 
-int checkIfValidFile(const char *fileName, int fileTypes) {
+int checkIfValidFile(const char *fileName, int fileTypes) 
+{
     // 1 for Audio 2 for playlists. 
     // Check if the file is a supported audio file
 
@@ -71,7 +71,8 @@ int checkIfValidFile(const char *fileName, int fileTypes) {
 
 // DEALING WITH THE FILESYSTEM -------------------------------------------------------------//
 
-void listDir(const char *path) { 
+void listDir(const char *path) 
+{ 
     WIN32_FIND_DATA findFileData; // Basically currentFile like returned from readdir
     HANDLE hFind = INVALID_HANDLE_VALUE; // windows specific thing that's used to keep a directory open. 
 
@@ -110,7 +111,8 @@ void listDir(const char *path) {
 }
 
 
-void getListOfFiles(const char *path, char (*fileList)[MAX_PATH], char (*playlistList)[MAX_PATH], int *currentListIndex, int *currentPlayListIndex){
+void getListOfFiles(const char *path, char (*fileList)[MAX_PATH], char (*playlistList)[MAX_PATH], int *currentListIndex, int *currentPlayListIndex)
+{
 
     WIN32_FIND_DATA findFileData; // Basically currentFile like returned from readdir
     HANDLE hFind = INVALID_HANDLE_VALUE; // windows specific thing that's used to keep a directory open. 
@@ -163,7 +165,8 @@ void getListOfFiles(const char *path, char (*fileList)[MAX_PATH], char (*playlis
 
 // ARRAY HELPER FUNCTIONS ------------------------------------------------------------------//
 
-void initializeTrackArray ( char (*array)[MAX_PATH], int legnth) {
+void initializeTrackArray ( char (*array)[MAX_PATH], int legnth)
+{
     int i = 0; 
     while (i < legnth) {
         array[i][0] = '\0';
@@ -172,7 +175,8 @@ void initializeTrackArray ( char (*array)[MAX_PATH], int legnth) {
 }
 
 
-void printStringArray (char (*array)[MAX_PATH] ) {
+void printStringArray (char (*array)[MAX_PATH] )
+{
     int i = 0;
     while (array[i][0] != '\0') {
         puts(array[i]);
@@ -180,7 +184,8 @@ void printStringArray (char (*array)[MAX_PATH] ) {
     }
 }
 
-void appendToTrackList ( char (*array)[MAX_PATH], const char *fileName) {
+void appendToTrackList ( char (*array)[MAX_PATH], const char *fileName)
+{
     // Call only after initializeTrackArray
 
     int i = 0;
@@ -214,13 +219,15 @@ int kbhit(void)
     }
 }
 
-void formatTimeString(float time, char *string) {
+void formatTimeString(float time, char *string) 
+{
     // Formats time like 1:30
     int iTime = time;
     snprintf(string, 20, "%02d:%02d", (iTime/60), (iTime%60));
 }
 
-int shouldIncScrollOffset(int currentScroll, int maxY ) {
+int shouldIncScrollOffset(int currentScroll, int maxY )
+{
     if (currentScroll < (maxY / 2) ) {
         return 0;
     }
@@ -229,7 +236,8 @@ int shouldIncScrollOffset(int currentScroll, int maxY ) {
     }
 }
 
-int shouldDecScrollOffset(int offset){
+int shouldDecScrollOffset(int offset)
+{
     if (offset > 0) {
         return 1;
     }
@@ -238,7 +246,8 @@ int shouldDecScrollOffset(int offset){
     }
 }
 
-void adjustScrollOffset (int *offset, int currentScroll, int maxY, int add) {
+void adjustScrollOffset (int *offset, int currentScroll, int maxY, int add)
+{
     // add is whether to increment or decrement (1 for +1, 0 for -1)
     // set to 0
     if (currentScroll < maxY/2) {
@@ -257,7 +266,8 @@ void adjustScrollOffset (int *offset, int currentScroll, int maxY, int add) {
     }
 }
 
-int rowHighlightCalc(int row, int offset) {
+int rowHighlightCalc(int row, int offset)
+{
     if (offset == 0) {
         return row;
     }
@@ -266,7 +276,8 @@ int rowHighlightCalc(int row, int offset) {
     }
 }
 
-void insertIntoArrayAtN(char (*array)[MAX_PATH], int nIndex, const char *string, int arrayLength){
+void insertIntoArrayAtN(char (*array)[MAX_PATH], int nIndex, const char *string, int arrayLength)
+{
     // Replace the Nth element and shift others accordingly
     // Make sure not to pass an nIndex surrounded by null characters. 
 
@@ -284,7 +295,8 @@ void insertIntoArrayAtN(char (*array)[MAX_PATH], int nIndex, const char *string,
     }
 }
 
-void removeNthFromArray(char (*array)[MAX_PATH], int nIndex, int arrayLength){
+void removeNthFromArray(char (*array)[MAX_PATH], int nIndex, int arrayLength)
+{
     int i = nIndex;
     if (nIndex == arrayLength) {
         array[i][0] = '\0';
@@ -295,7 +307,8 @@ void removeNthFromArray(char (*array)[MAX_PATH], int nIndex, int arrayLength){
     }
 }
 
-bool isValidFileTextChar(int character){
+bool isValidFileTextChar(int character)
+{
     if ( 
             (character >= 65 & character <= 90) || // Upper Case letters 
             (character >= 97 & character <= 122) || // Lower Case letters 
@@ -310,7 +323,8 @@ bool isValidFileTextChar(int character){
     }
 }
 
-void popLastChar (char *string){
+void popLastChar (char *string)
+{
     int i = 0;
     while (string[i] != '\0') {
         i++;
@@ -318,7 +332,8 @@ void popLastChar (char *string){
     string[i-1] = '\0';
 }
 
-void removeNewline(char *string){
+void removeNewline(char *string)
+{
     int i = 0;
     while (string[i] != '\0') {
         if (string[i] == '\n'){
@@ -328,7 +343,8 @@ void removeNewline(char *string){
     }
 }
 
-void printListToFile(char (*array)[MAX_PATH], const char *fileName) {
+void printListToFile(char (*array)[MAX_PATH], const char *fileName) 
+{
     // Create a playlist, fileName is a full Path
     FILE *playListFile;
     char fullFilePath[MAX_PATH];
@@ -345,7 +361,8 @@ void printListToFile(char (*array)[MAX_PATH], const char *fileName) {
     fclose(playListFile);
 }
 
-void loadPlayList(char (*array)[MAX_PATH], const char *fileName){
+void loadPlayList(char (*array)[MAX_PATH], const char *fileName)
+{
     // Load playlist line by line and append to playQueue
     FILE *playListFile;
     playListFile = fopen(fileName, "r");
@@ -367,7 +384,8 @@ void loadPlayList(char (*array)[MAX_PATH], const char *fileName){
     fclose(playListFile);
 }
 
-void strLower(char *string, int length) {
+void strLower(char *string, int length) 
+{
     // Warning: Modifies memory do not use on file list 
     int i = 0; 
     while (i < length & string[i] != '\0') {
@@ -376,7 +394,8 @@ void strLower(char *string, int length) {
     }
 }
 
-void searchStringInList(char (*source)[MAX_PATH], int sourceSize,  char (*output)[MAX_PATH], int outputSize, const char *query, int offset) {
+void searchStringInList(char (*source)[MAX_PATH], int sourceSize,  char (*output)[MAX_PATH], int outputSize, const char *query, int offset) 
+{
     // Just checking for substrings. Make sure to clear output before passing it here 
     int currentOutputIndex = 0;
     int currentSourceIndex = 0;
@@ -409,8 +428,8 @@ void searchStringInList(char (*source)[MAX_PATH], int sourceSize,  char (*output
 
 // MAIN FUNCTION ---------------------------------------------------------------------------//
 
-
-int main() {
+int main() 
+{
 
     // INITIALIZE --------------------------------------------------------------------------//
 
@@ -914,7 +933,7 @@ int main() {
 
 
         refresh();
-        Sleep(5);
+        Sleep(2);
 
         // End Of Redrawing the screen
     }
