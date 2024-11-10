@@ -1,4 +1,4 @@
-# wcmp (Windows Curses Music Player)
+# wcmp (wcmp Curses Music Player)
 
 A console music player for windows inspired by [cmus](https://github.com/cmus/cmus) and [ncmpcpp](https://github.com/ncmpcpp/ncmpcpp). 
 
@@ -15,6 +15,8 @@ A console music player for windows inspired by [cmus](https://github.com/cmus/cm
 ### UI navigation
 - `j` - Move down
 - `k` - Move up
+- `g` - Jump to top
+- `G` - Jump to bottom
 - `<Escape>` - Exit Program / Exit text input mode
 
 ## menu Navigation 
